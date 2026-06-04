@@ -16,29 +16,37 @@ import {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
-export default function LoginScreen() {
+export default function SignupScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
-  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
-    null,
-  );
+  const [focusedField, setFocusedField] = useState<
+    "email" | "password" | "confirmPassword" | null
+  >(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const emailError = getEmailError(email);
   const passwordError = getPasswordError(password);
+  const confirmPasswordError = getConfirmPasswordError(
+    password,
+    confirmPassword,
+  );
   const showEmailError = (submitted || emailTouched) && Boolean(emailError);
   const showPasswordError = submitted && Boolean(passwordError);
+  const showConfirmPasswordError = submitted && Boolean(confirmPasswordError);
 
-  function handleLogin() {
+  function handleSignup() {
     setSubmitted(true);
 
-    if (emailError || passwordError) {
+    if (emailError || passwordError || confirmPasswordError) {
       return;
     }
 
-    Alert.alert("로그인 성공", `${email.trim()}님 환영합니다!`);
+    Alert.alert("회원가입 완료", "이제 로그인할 수 있습니다.", [
+      { text: "확인", onPress: () => router.replace("/") },
+    ]);
   }
 
   return (
@@ -55,10 +63,10 @@ export default function LoginScreen() {
             <View style={styles.logoMark}>
               <Text style={styles.logoText}>L</Text>
             </View>
-            <Text style={styles.eyebrow}>Welcome back</Text>
-            <Text style={styles.title}>로그인</Text>
+            <Text style={styles.eyebrow}>Create account</Text>
+            <Text style={styles.title}>회원가입</Text>
             <Text style={styles.subtitle}>
-              이메일과 비밀번호로 계정에 접속하세요.
+              사용할 이메일과 비밀번호를 입력해주세요.
             </Text>
           </View>
 
@@ -112,9 +120,9 @@ export default function LoginScreen() {
                   onBlur={() => setFocusedField(null)}
                   secureTextEntry={!isPasswordVisible}
                   autoCapitalize="none"
-                  autoComplete="password"
-                  textContentType="password"
-                  returnKeyType="done"
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="next"
                   accessibilityLabel="비밀번호"
                 />
                 <Pressable
@@ -138,24 +146,50 @@ export default function LoginScreen() {
               )}
             </View>
 
+            <View style={styles.field}>
+              <Text style={styles.label}>비밀번호 확인</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  focusedField === "confirmPassword" && styles.inputFocused,
+                  showConfirmPasswordError && styles.inputError,
+                ]}
+                placeholder="비밀번호 다시 입력"
+                placeholderTextColor="#8A94A6"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                onFocus={() => setFocusedField("confirmPassword")}
+                onBlur={() => setFocusedField(null)}
+                secureTextEntry={!isPasswordVisible}
+                autoCapitalize="none"
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="done"
+                accessibilityLabel="비밀번호 확인"
+              />
+              {showConfirmPasswordError && (
+                <Text style={styles.errorText}>{confirmPasswordError}</Text>
+              )}
+            </View>
+
             <Pressable
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
               ]}
-              onPress={handleLogin}
+              onPress={handleSignup}
             >
-              <Text style={styles.buttonText}>로그인</Text>
+              <Text style={styles.buttonText}>회원가입</Text>
             </Pressable>
           </View>
 
           <Pressable
             style={({ pressed }) => pressed && styles.linkPressed}
-            onPress={() => router.push("/signup")}
+            onPress={() => router.replace("/")}
             accessibilityRole="button"
           >
             <Text style={styles.signupText}>
-              아직 계정이 없나요? <Text style={styles.signupLink}>회원가입</Text>
+              이미 계정이 있나요? <Text style={styles.signupLink}>로그인</Text>
             </Text>
           </Pressable>
         </ScrollView>
@@ -185,6 +219,18 @@ function getPasswordError(value: string) {
 
   if (value.length < MIN_PASSWORD_LENGTH) {
     return `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.`;
+  }
+
+  return "";
+}
+
+function getConfirmPasswordError(password: string, confirmPassword: string) {
+  if (!confirmPassword) {
+    return "비밀번호를 한 번 더 입력해주세요.";
+  }
+
+  if (password !== confirmPassword) {
+    return "비밀번호가 서로 일치하지 않습니다.";
   }
 
   return "";
